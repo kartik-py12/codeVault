@@ -1,9 +1,13 @@
+import {installNavObserver,getNavObserver} from "./observers.js";
 
 const IDS = {
   mount: 'code-vault-nav-mount',
   save: 'code-vault-save-btn',
   git: 'code-vault-add-btn'
 };
+
+let isReconciling = false;
+
 
 function findAnchor(){
   const settings = document.getElementById('nav-setting-btn');
@@ -57,7 +61,7 @@ function createGithubBtn(){
   gitBtn.title = "Sync to Github";
 
   const githubImg = document.createElement("img");
-  githubImg.src = chrome.runtime.getURL("icons/github.svg");
+  githubImg.src = chrome.runtime.getURL("/icons/github.svg");
   githubImg.alt = 'Sync to Github';
   githubImg.width = 25;
   githubImg.classList.add("codeVault-btn-icon");
@@ -67,92 +71,28 @@ function createGithubBtn(){
 }
 
 
-function reconcileBtns(){
+export function reconcileBtns(){
+  if(isReconciling) return;
   const anchor = findAnchor();
 
   if(!anchor) return;
 
-  const mount = ensureMount(anchor);
+  const navObserver = getNavObserver();
+  if(navObserver) navObserver.disconnect();
+  isReconciling = true;
 
-  if(!document.getElementById(IDS.save)){
-    mount.appendChild(createSaveBtn());
-  }
-
-  if(!document.getElementById(IDS.git)){ 
-    mount.appendChild(createGithubBtn());
-  }
-}
-
-
-function debounce(fn,wait){
-  let timeout = null;
-  return function(...args){
-    clearTimeout(timeout);
-    timeout = setTimeout(() => {
-      fn(...args);
-    }, wait);
-  }
-}
-
-const debouncedReconcile = debounce(reconcileBtns,120);
-
-function installRouteHooks(){
-  const originalPush = history.pushState;
-  const originalReplace = history.replaceState;
-
-  function onRouteChange(){
-    debouncedReconcile();
+  try{
+    const mount = ensureMount(anchor);
+    
+    if(!document.getElementById(IDS.save)){
+      mount.appendChild(createSaveBtn());
+    }
+    
+    if(!document.getElementById(IDS.git)){ 
+      mount.appendChild(createGithubBtn());
+    }
+  }finally{
+    isReconciling = false;
     installNavObserver();
   }
-
-  history.pushState = function(...args){
-    const ret = originalPush.apply(this,args);
-    onRouteChange();
-    return ret;
-  }
-
-  history.replaceState = function(...args){
-    const ret = originalReplace.apply(this,args);
-    onRouteChange();
-    return ret;
-  };
-
-  window.addEventListener("popstate",onRouteChange);
 }
-
-let navObserver = null;
-
-function findObserveredRoot(){
-  return document.querySelector('nav') || document.body;
-}
-
-function installNavObserver(){
-  const root = findObserveredRoot();
-  if(!root) return;
-
-  if(navObserver) navObserver.disconnect();
-
-  navObserver = new MutationObserver(() => {
-    debouncedReconcile();
-  });
-
-  navObserver.observe(root,{
-    childList:true,
-    subtree:true
-  });
-}
-
-function start(){
-  reconcileBtns();
-  installRouteHooks();
-  installNavObserver();
-}
-
-if(document.readyState === 'loading'){
-  document.addEventListener("DOMContentLoaded", start,{once:true});
-} else {
-  start();
-}
-
-
-

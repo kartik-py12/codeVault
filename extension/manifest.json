@@ -1,18 +1,26 @@
 {
     "manifest_version": 3,
-    "name": "CodeVault1 - LeetCode Tracker",
+    "name": "CodeVault - VITE version",
     "version": "1.0",
-    "description": "Track your DSA journey across LeetCode, organize problems, and save solutions",
-    "content_scripts":[
+    "description": "Track your DSA journey across LeetCode, organize problems, and sync with GitHub",
+    "content_scripts": [
         {
-            "matches":["https://leetcode.com/problems/*"],
-            "js":["content.js"]
+            "matches" : ["https://leetcode.com/problems/*"],
+            "js" : ["content.js"]
         }
     ],
-    "web_accessible_resources": [
+    "background": {
+        "service_worker": "background.js"
+    },
+
+    "web_accessible_resources" : [
         {
-            "resources": ["icons/save.svg", "icons/github.svg"],
-            "matches": ["<all_urls>"]
+            "resources": [
+                "icons/save.svg",
+                "icons/github.svg",
+                "injected.js"
+            ],
+            "matches": ["https://leetcode.com/*"]
         }
     ]
 }

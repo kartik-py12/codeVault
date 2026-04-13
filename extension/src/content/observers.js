@@ -61,5 +61,5 @@ export function installNavObserver(){
   navObserver.observe(root,{
     childList:true,
     subtree:true
-  });
-}
+    });
+  }

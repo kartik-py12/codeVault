@@ -1,21 +1,59 @@
-// src/injected/index.js
-
 // This executes purely in the Main World, bypassing the Isolated World
-(function() {
-    try {
-        if (window.monaco && window.monaco.editor) {
-            const models = window.monaco.editor.getModels();
-            
-            const editorData = models.map(model => ({
-                uri: model.uri.toString(),
-                content: model.getValue()
-            }));
 
-            window.postMessage({ type: 'MONACO_EXTRACTED', success: true, payload: editorData }, '*');
-        } else {
-            window.postMessage({ type: 'MONACO_EXTRACTED', success: false }, '*');
+
+// what needs to be done => 
+    // create a wrapper around window.fetch such that we can intecept that netowork call from leetcode
+    // and listins to submit success
+
+
+const extractCode = () => {
+    let editorData = "";
+    if(window.monaco && window.monaco.editor){
+        const models = window.monaco.editor.getModels();
+        for(let i=0;i<models.length;i++){
+            const currentContent = models[i].getValue().toString();
+            if(currentContent.length > editorData.length){
+                editorData = currentContent;
+            }
         }
-    } catch (e) {
-        window.postMessage({ type: 'MONACO_EXTRACTED', success: false }, '*');
     }
+    return editorData;
+}
+
+(function (){
+    console.log("Initializing Inject script...");
+    const originalFetch = window.fetch;
+
+    window.fetch = async function (...args) {
+        const resource = args[0];
+        const url = typeof resource === "string" ? resource : resource.url;
+        console.log(`url is this: ${url}`);
+        
+        const response = await originalFetch.apply(this,args);
+
+        if(url && url.includes('/submissions/detail/') && url.includes('/check/')){
+            const clone = response.clone();
+
+            clone.json().then(data => {
+                console.log(data);
+                if(data.state === "SUCCESS" && data.status_msg === "Accepted"){
+
+                    //grab the code from Monaco
+                    const code = extractCode();
+
+                    window.postMessage({
+                        type:"CODEVAULT_SUCCESS",
+                        submissionStats:data,
+                        code
+                    },'*');
+
+                    console.log(code);
+                }
+            }).catch(err => {
+                console.error(err);
+            });
+        }
+        return response;
+    };
 })();
+

@@ -1,18 +1,22 @@
+import "dotenv/config";
 import express from "express";
 import { configDotenv } from "dotenv";
 import cors from "cors";
 import connectDB from "./db/connect.js";
 import authRoutes from "./routes/auth.route.js";    
+import cookieParser from "cookie-parser";
 
-configDotenv();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
+app.use(cookieParser());
+app.use(express.urlencoded({extended: true}));
 app.use(cors({
-    origin: ["https://leetcode.com"],
+    origin: ["https://leetcode.com", "http://localhost:5173"],
     methods: ["POST","OPTIONS"],
-    allowedHeaders: ["Content-Type"]
+    allowedHeaders: ["Content-Type", "Authorization"],
+    credentials: true
 }));
 
 app.use("/api/auth", authRoutes);

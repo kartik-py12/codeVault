@@ -38,7 +38,7 @@ const generateNotes = async (problemTitle, problemDescription, code, language) =
         contents: prompt,
         config: {
             responseMimeType: "application/json",
-        }
+        },
     });
 
     return JSON.parse(response.text);

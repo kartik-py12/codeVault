@@ -1,6 +1,6 @@
 import jwt from "jsonwebtoken";
 import axios from "axios";
-import User from "../model/user.js";
+import User from "../models/user.js";
 import crypto from "node:crypto";
 import { encryptToken } from "../utils/encryption.js";
 

@@ -22,6 +22,16 @@ const submissionSchema = new mongoose.Schema({
         type: String,
         enum: ["PENDING", "COMPLETED", "FAILED"],
         default: "PENDING"
+    },
+    aiNotes: {
+        intuition: {type: String},
+        timeComplexity: {type: String},
+        spaceComplexity: {type: String},
+        followUps: [{
+            question: {type: String},
+            hint: {type: String}
+        }],
+        howToAnswer: {type: String}
     }
 },{timestamps:true});
 

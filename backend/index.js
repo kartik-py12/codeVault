@@ -6,7 +6,7 @@ import authRoutes from "./routes/auth.route.js";
 import cookieParser from "cookie-parser";
 import { requireAuth } from "./middleware/auth.middleware.js";
 
-import { connectRabbitMQ, publistToQueue } from "./utils/rabbitmq.js";
+import { connectRabbitMQ, publishToQueue } from "./utils/rabbitmq.js";
 import submission from "./models/submission.js";
 
 const app = express();
@@ -46,7 +46,8 @@ app.post("/api/sync",requireAuth, async (req,res) => {
             problemDetails
         }
 
-        await publistToQueue("github_sync_queue", jobPayload);
+        await publishToQueue("github_sync_queue", jobPayload);
+        await publishToQueue("gemini_notes_queue", jobPayload);
     
         return res.status(200).json({
             success:true,

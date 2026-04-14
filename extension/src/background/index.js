@@ -40,7 +40,6 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
     if (request.type === "SYNC_LEETCODE_DATA") {
         
-        // Grab the JWT cookie set by your local React app
         chrome.cookies.get({ url: 'http://localhost:5173', name: 'codevault_jwt' }, async (cookie) => {
             
             if (!cookie) {
@@ -48,7 +47,6 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                 sendResponse({ success: false, error: "Not logged in to CodeVault" });
                 return;
             }
-            console.log("Found JWT cookie:", cookie);
 
             const jwtToken = cookie.value;
 

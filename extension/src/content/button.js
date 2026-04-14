@@ -50,6 +50,40 @@ function createSaveBtn(){
   saveImg.classList.add('codeVault-btn-icon');
 
   saveBtn.appendChild(saveImg);
+
+  saveBtn.addEventListener('click', () => {
+    const pathParts = window.location.pathname.split('/');
+    const problemIndex = pathParts.indexOf('problems');
+    const titleSlug = problemIndex !== -1 ? pathParts[problemIndex + 1] : null;
+
+    if (!titleSlug) {
+      console.error('Unable to detect problem slug for TODO sync.');
+      return;
+    }
+
+    chrome.runtime.sendMessage({ type: 'FETCH_METADATA', titleSlug }, (response) => {
+      if (!response?.success) {
+        console.error('Failed to fetch metadata for TODO sync:', response?.error);
+        return;
+      }
+
+      const payload = {
+        syncType: 'TODO',
+        stats: { lang: 'text' },
+        userCode: '// TODO: Solve this problem later',
+        problemDetails: response.data
+      };
+
+      chrome.runtime.sendMessage({ type: 'SYNC_LEETCODE_DATA', payload }, (syncResponse) => {
+        if (syncResponse?.success) {
+          console.log('Saved as TODO in CodeVault.');
+        } else {
+          console.error('TODO sync failed:', syncResponse?.error);
+        }
+      });
+    });
+  });
+
   return saveBtn;
 }
 

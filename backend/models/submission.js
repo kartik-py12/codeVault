@@ -18,9 +18,34 @@ const submissionSchema = new mongoose.Schema({
         type: String,
         required: true
     },
+    platform: {
+        type: String,
+        default: "LeetCode"
+    },
+    difficulty: {
+        type: String,
+        default: "Unknown"
+    },
+    problemContent: {
+        type: String,
+        default: ""
+    },
+    topicTags: {
+        type: [String],
+        default: []
+    },
+    externalUrl: {
+        type: String,
+        default: ""
+    },
+    syncType: {
+        type: String,
+        enum: ["GITHUB_SYNC", "TODO"],
+        default: "GITHUB_SYNC"
+    },
     status: {
         type: String,
-        enum: ["PENDING", "COMPLETED", "FAILED"],
+        enum: ["TODO", "PENDING", "COMPLETED", "FAILED"],
         default: "PENDING"
     },
     aiNotes: {

@@ -72,6 +72,7 @@ export const githubCallback = async (req, res) => {
         })
 
         const profile = userResponse.data;
+        const resolvedEmail = profile.email || `${profile.login}+${profile.id}@users.noreply.github.com`;
 
         const encryptedToken = encryptToken(accessToken);
 
@@ -79,7 +80,7 @@ export const githubCallback = async (req, res) => {
             {githubId: profile.id.toString()},
             {
                 username: profile.login,
-                email: profile.email || "",
+                email: resolvedEmail,
                 avatarUrl: profile.avatar_url,
                 accessToken: encryptedToken
             },
@@ -129,6 +130,21 @@ export const logout = async (req, res) => {
         return res.status(200).json({ success: true, message: "Logged out successfully" });
     } catch (error) {
         console.error("Logout Error:", error);
+        return res.status(500).json({ success: false, error: "Internal server error" });
+    }
+};
+
+export const getCurrentUser = async (req, res) => {
+    try {
+        const user = await User.findById(req.user.id).select("_id username email avatarUrl githubId createdAt");
+
+        if (!user) {
+            return res.status(404).json({ success: false, error: "User not found" });
+        }
+
+        return res.status(200).json({ success: true, user });
+    } catch (error) {
+        console.error("Get current user error:", error.message);
         return res.status(500).json({ success: false, error: "Internal server error" });
     }
 };

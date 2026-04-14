@@ -1,1 +1,192 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@400;500&family=Syne:wght@400;700;800&family=DM+Sans:wght@400;500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap');
 @import "tailwindcss";
+
+html,
+body,
+#root {
+	min-height: 100%;
+}
+
+body {
+	margin: 0;
+	background: #0a0b1e;
+	color: #e2e8f0;
+	font-family: Inter, sans-serif;
+}
+
+.material-symbols-outlined {
+	font-variation-settings: 'FILL' 0, 'wght' 500, 'GRAD' 0, 'opsz' 24;
+}
+
+.landing-grid-mask {
+	background-image: linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+		linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+	background-size: 40px 40px;
+	mask-image: linear-gradient(to bottom, black 45%, transparent 100%);
+}
+
+.login-grid {
+	background-image: linear-gradient(to right, rgba(74, 68, 85, 0.08) 1px, transparent 1px),
+		linear-gradient(to bottom, rgba(74, 68, 85, 0.08) 1px, transparent 1px);
+	background-size: 24px 24px;
+}
+
+.landing-orb {
+	position: absolute;
+	width: 600px;
+	height: 600px;
+	border-radius: 999px;
+	background: radial-gradient(circle, rgba(79, 70, 229, 0.15) 0%, rgba(10, 14, 39, 0) 70%);
+}
+
+.glass-brand {
+	border: 1px solid rgba(255, 255, 255, 0.08);
+	background: rgba(255, 255, 255, 0.03);
+	backdrop-filter: blur(12px);
+}
+
+.glass-login {
+	background: rgba(15, 18, 38, 0.74);
+	backdrop-filter: blur(40px);
+}
+
+.text-gradient-brand {
+	background: linear-gradient(135deg, #a78bfa 0%, #22d3ee 100%);
+	-webkit-background-clip: text;
+	background-clip: text;
+	-webkit-text-fill-color: transparent;
+}
+
+.btn-gradient-brand {
+	background: linear-gradient(90deg, #7c3aed 0%, #4f46e5 100%);
+	box-shadow: 0 0 15px rgba(124, 58, 237, 0.35);
+	transition: all 0.3s ease;
+}
+
+.btn-gradient-brand:hover {
+	transform: translateY(-1px);
+	box-shadow: 0 0 25px rgba(124, 58, 237, 0.52);
+}
+
+.glow-login-btn {
+	box-shadow: 0 4px 20px rgba(124, 58, 237, 0.35);
+}
+
+.glow-login-btn:hover {
+	box-shadow: 0 4px 30px rgba(124, 58, 237, 0.54);
+}
+
+.mockup-tilt {
+	transform: perspective(2000px) rotateX(12deg) translateY(0);
+	transform-style: preserve-3d;
+	transition: transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+	box-shadow: 0 50px 100px -20px rgba(0, 0, 0, 0.6);
+}
+
+.mockup-tilt:hover {
+	transform: perspective(2000px) rotateX(5deg) translateY(-16px);
+}
+
+.hm-cell {
+	aspect-ratio: 1 / 1;
+	border-radius: 2px;
+}
+
+.hm-l0 {
+	background-color: rgba(30, 41, 59, 0.5);
+}
+
+.hm-l1 {
+	background-color: rgba(99, 102, 241, 0.3);
+}
+
+.hm-l2 {
+	background-color: rgba(99, 102, 241, 0.6);
+}
+
+.hm-l3 {
+	background-color: #8b5cf6;
+	box-shadow: 0 0 8px rgba(139, 92, 246, 0.4);
+}
+
+.hm-l4 {
+	background-color: #22d3ee;
+	box-shadow: 0 0 10px rgba(34, 211, 238, 0.6);
+}
+
+.timeline-item {
+	border-left: 2px solid rgba(139, 92, 246, 0.3);
+	padding-bottom: 1.2rem;
+	padding-left: 1.3rem;
+	position: relative;
+}
+
+.timeline-item::before {
+	content: '';
+	width: 10px;
+	height: 10px;
+	border-radius: 999px;
+	border: 2px solid #8b5cf6;
+	background: #13162e;
+	left: -6px;
+	position: absolute;
+	top: 0.1rem;
+}
+
+.code-syntax .keyword {
+	color: #c678dd;
+}
+
+.code-syntax .function {
+	color: #61afef;
+}
+
+.code-syntax .string {
+	color: #98c379;
+}
+
+.code-syntax .number {
+	color: #d19a66;
+}
+
+.code-syntax .comment {
+	color: #5c6370;
+	font-style: italic;
+}
+
+.code-syntax .operator {
+	color: #56b6c2;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+	width: 8px;
+	height: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+	background: #0a0b1e;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+	background: #2d2839;
+	border-radius: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+	background: #4b455e;
+}
+
+@keyframes spin-slow {
+	from {
+		transform: rotate(0deg);
+	}
+
+	to {
+		transform: rotate(360deg);
+	}
+}
+
+.animate-spin-slow {
+	animation: spin-slow 2.4s linear infinite;
+}

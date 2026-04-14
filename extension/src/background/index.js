@@ -28,7 +28,13 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         })
         .then(response => response.json())
         .then(data => {
-            sendResponse({success:true, data: data.data.question});
+            sendResponse({
+                success: true,
+                data: {
+                    ...data.data.question,
+                    titleSlug: request.titleSlug
+                }
+            });
         })
         .catch(err => {
             console.error(`graphql error: ${err.message}`);

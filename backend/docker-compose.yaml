@@ -7,6 +7,8 @@ services:
     ports:
       - "5672:5672"
       - "15672:15672"
+      - "15692:15692" # RabbitMQ Native Prometheus Port
+    command: sh -c "rabbitmq-plugins enable rabbitmq_prometheus && rabbitmq-server"
     environment:
       RABBITMQ_DEFAULT_USER: guest
       RABBITMQ_DEFAULT_PASS: guest
@@ -16,3 +18,29 @@ services:
     container_name: codevault-redis
     ports:
       - "6379:6379"
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: codevault-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus # Persist Prometheus metrics
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: codevault-grafana
+    ports:
+      - "3001:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+    depends_on:
+      - prometheus
+    volumes:
+      - grafana-storage:/var/lib/grafana # Persist Grafana dashboards
+      
+volumes:
+  prometheus-data:
+  grafana-storage:

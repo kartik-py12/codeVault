@@ -4,6 +4,7 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
+import client from "prom-client";
 
 import connectDB from "./db/connect.js";
 import { connectRabbitMQ } from "./utils/rabbitmq.js";
@@ -14,6 +15,30 @@ import { connectRedis } from "./utils/redis.js";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+const register = new client.Registry();
+client.collectDefaultMetrics({ register });
+
+const httpRequestDurationMicroseconds = new client.Histogram({
+  name: 'http_request_duration_seconds',
+  help: 'Duration of HTTP requests in seconds',
+  labelNames: ['method', 'route', 'status_code'],
+  buckets: [0.1, 0.3, 0.5, 0.7, 1, 3, 5, 7, 10] // Latency buckets
+});
+register.registerMetric(httpRequestDurationMicroseconds);
+
+app.use((req, res, next) => {
+    const end = httpRequestDurationMicroseconds.startTimer();
+    res.on('finish', () => {
+        end({ method: req.method, route: req.route ? req.route.path : req.path, status_code: res.statusCode });
+    });
+    next();
+});
+
+app.get('/metrics', async (req, res) => {
+    res.set('Content-Type', register.contentType);
+    res.end(await register.metrics());
+});
 
 app.use(helmet());
 

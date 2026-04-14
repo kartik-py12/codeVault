@@ -6,12 +6,10 @@ function getTitleSlug(){
         : null; 
 }
 
-
 export function listenForExtraction(){
     window.addEventListener('message',(event) => {
         
         if (event.origin !== "https://leetcode.com") return;
-        
         if (event.data?.type !== "CODEVAULT_SUCCESS") return;
         
         console.log("Received message:", event.data);
@@ -22,9 +20,10 @@ export function listenForExtraction(){
 
         if(!titleSlug) return;
 
+        // 1. Fetch metadata from background
         chrome.runtime.sendMessage(
             {type:"FETCH_METADATA", titleSlug},
-            async (response) => {
+            (response) => {
                 if(response && response.success){
                     const finalPayload = {
                         stats: submissionStats,
@@ -32,23 +31,22 @@ export function listenForExtraction(){
                         problemDetails: response.data
                     };
 
-                    try {
-                        const backendRes = await fetch("http://localhost:3000/api/sync",{
-                            method:"POST",
-                            headers:{
-                                "Content-Type":"application/json"
-                            },
-                            body: JSON.stringify(finalPayload)
-                        });
+                    // 2. 🛡️ Send payload to background script to attach JWT and sync to backend
+                    chrome.runtime.sendMessage(
+                        { type: "SYNC_LEETCODE_DATA", payload: finalPayload },
+                        (syncResponse) => {
+                            if (syncResponse && syncResponse.success) {
+                                console.log("✅ Successfully synced to CodeVault backend!");
+                            } else {
+                                console.error("❌ Backend sync failed:", syncResponse?.error);
+                            }
+                        }
+                    );
 
-                        const result = await backendRes.json();
-                        console.log("Backend response:", result);
-                    } catch (error) {
-                        console.error("Error sending data to backend:", error);
-                    }
-                }else{
-console.error("❌ Failed to fetch problem metadata. Reason:", response?.error);                }
+                } else {
+                    console.error("❌ Failed to fetch problem metadata. Reason:", response?.error);
+                }
             }
         )
-    })
+    });
 }

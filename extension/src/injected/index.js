@@ -21,13 +21,11 @@ const extractCode = () => {
 }
 
 (function (){
-    console.log("Initializing Inject script...");
     const originalFetch = window.fetch;
 
     window.fetch = async function (...args) {
         const resource = args[0];
         const url = typeof resource === "string" ? resource : resource.url;
-        console.log(`url is this: ${url}`);
         
         const response = await originalFetch.apply(this,args);
 

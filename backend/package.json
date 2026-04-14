@@ -11,6 +11,8 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@octokit/rest": "^22.0.1",
+    "amqplib": "^1.0.3",
     "axios": "^1.15.0",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",

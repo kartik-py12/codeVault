@@ -3,6 +3,14 @@
     "name": "CodeVault - VITE version",
     "version": "1.0",
     "description": "Track your DSA journey across LeetCode, organize problems, and sync with GitHub",
+    "permissions": [
+        "cookies"
+    ],
+    "host_permissions": [
+        "https://leetcode.com/*",
+        "http://localhost:5173/*",
+        "http://localhost:3000/*"
+    ],
     "content_scripts": [
         {
             "matches" : ["https://leetcode.com/problems/*"],

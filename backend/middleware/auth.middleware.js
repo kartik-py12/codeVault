@@ -1,4 +1,5 @@
 import jwt from "jsonwebtoken";
+import redisClient from "../utils/redis.js";
 
 export const requireAuth = async (req, res, next) => {
     try {
@@ -13,6 +14,11 @@ export const requireAuth = async (req, res, next) => {
                 success: false, 
                 error: "Unauthorized: No token provided" 
             });
+        }
+        const isRevoked = await redisClient.get(`bl_${token}`);
+ 
+        if (isRevoked){
+            return res.status(401).json({ success: false, error: "Unauthorized: Token has been revoked. Please log in again." });
         }
 
         const decoded = jwt.verify(token, process.env.JWT_SECRET);

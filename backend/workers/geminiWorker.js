@@ -49,7 +49,7 @@ const processJob = async (jobData) => {
 
     try {
         
-        const problemDescription = problemDetails.content || "Description not available.";
+        const problemDescription = problemDetails?.content ?? "Description not available.";
         const aiNotes = await generateNotes(problemTitle, problemDescription, code, stats.lang);
 
         await submission.findByIdAndUpdate(submissionId, {aiNotes});
@@ -72,7 +72,14 @@ const startWorker = async () => {
         const channel =  await connection.createChannel();
 
         const queue = "gemini_notes_queue";
-        await channel.assertQueue(queue, {durable: true});
+        const dlx = "dlx_exchange";
+        const queueOptions = {
+            durable: true,
+            deadLetterExchange: dlx,
+            deadLetterRoutingKey: "failed_jobs"
+        };
+
+        await channel.assertQueue(queue, queueOptions);
 
         channel.prefetch(1);
         console.log("Gemini Worker is waiting for messages in queue:", queue);

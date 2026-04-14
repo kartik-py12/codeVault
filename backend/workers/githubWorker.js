@@ -132,7 +132,15 @@ const startWorker = async () => {
         const channel = await connection.createChannel();
         
         const queue = "github_sync_queue";
-        await channel.assertQueue(queue, {durable: true});
+
+        const dlx = "dlx_exchange";
+        const queueOptions = {
+            durable: true,
+            deadLetterExchange: dlx,
+            deadLetterRoutingKey: "failed_jobs"
+        };
+
+        await channel.assertQueue(queue, queueOptions);
         
         channel.prefetch(1);
         

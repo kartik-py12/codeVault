@@ -2,6 +2,7 @@ import jwt from "jsonwebtoken";
 import axios from "axios";
 import User from "../models/user.js";
 import crypto from "node:crypto";
+import redisClient from "../utils/redis.js";
 import { encryptToken } from "../utils/encryption.js";
 
 const Required_Scopes = ["read:user", "user:email", "repo"];
@@ -105,3 +106,29 @@ export const githubCallback = async (req, res) => {
         return res.redirect(`${process.env.FRONTEND_URL}/login?error=oauth_failed`);
     }
 }
+
+export const logout = async (req, res) => {
+    try {
+        let token = req.cookies?.codevault_jwt;
+
+        if (!token && req.headers.authorization?.startsWith("Bearer ")) {
+            token = req.headers.authorization.split(" ")[1];
+        }
+        
+        if (token) {
+            await redisClient.setEx(`bl_${token}`, 7 * 24 * 60 * 60, 'revoked');
+            const checkRedis = await redisClient.get(`bl_${token}`);
+        }
+
+        res.clearCookie("codevault_jwt", {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "lax"
+        });
+
+        return res.status(200).json({ success: true, message: "Logged out successfully" });
+    } catch (error) {
+        console.error("Logout Error:", error);
+        return res.status(500).json({ success: false, error: "Internal server error" });
+    }
+};

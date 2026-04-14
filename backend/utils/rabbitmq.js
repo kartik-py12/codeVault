@@ -7,9 +7,23 @@ export const connectRabbitMQ = async () => {
         const connection = await amqp.connect(process.env.RABBITMQ_URI);
         channel = await connection.createChannel();
 
-        await channel.assertQueue("github_sync_queue",{durable:true});
+        const dlx = "dlx_exchange";
+        const dlq = "dead_letter_queue";
 
-        console.log("Connected to RabbitMQ and channel created.");
+        await channel.assertExchange(dlx, "direct", { durable: true });
+        await channel.assertQueue(dlq, { durable: true });
+        await channel.bindQueue(dlq,dlx,"failed_jobs");
+
+        const queueOptions = {
+            durable: true,
+            deadLetterExchange: dlx,
+            deadLetterRoutingKey: "failed_jobs"
+        }
+
+        await channel.assertQueue("github_sync_queue",queueOptions);
+        await channel.assertQueue("gemini_notes_queue",queueOptions);
+
+        console.log("Connected to RabbitMQ. DLQ and Queues asserted successfully.");
 
     } catch (error) {
         console.error(`RabbitMQ connection error: ${error}`);

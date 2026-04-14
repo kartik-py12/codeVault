@@ -4,14 +4,16 @@
 
 ## Features
 
-- **🔗 Multi-Platform Sync** — Import submissions from LeetCode, GeeksforGeeks, Codeforces, and HackerRank
-- **🤖 AI-Powered Analysis** — Get personalized insights using Gemini 3 Flash for each solution
-- **📊 Progress Dashboard** — Visualize your DSA journey with interactive heatmaps and problem tracking
-- **🏷️ Smart Organization** — Filter by difficulty, topics, platform, and sync status
-- **🔐 Secure Auth** — GitHub OAuth 2.0 with encrypted token storage
-- **⚡ Real-Time Sync** — Chrome extension for automatic submission capture
-- **📝 Problem Metadata** — Automatic enrichment of problem details (difficulty, topics, content)
-- **📈 Performance Metrics** — Built-in observability with Prometheus for monitoring
+- **Secure Auth** — GitHub OAuth 2.0 with encrypted token storage
+- **Real-Time Sync** — Chrome extension for automatic submission capture
+- **Problem Metadata** — Automatic enrichment of problem details (difficulty, topics, content)
+- **Performance Metrics** — Built-in observability with Prometheus for monitoring
+- **AI-Powered Analysis** — Get personalized insights using Gemini 3 Flash for each solution
+- **Progress Dashboard** — Visualize your DSA journey with interactive heatmaps and problem tracking
+- **Smart Organization** — Filter by difficulty, topics, platform, and sync status
+
+
+
 
 ## Tech Stack
 

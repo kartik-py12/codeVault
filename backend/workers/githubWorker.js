@@ -5,8 +5,10 @@ import { Octokit } from "@octokit/rest";
 import User from "../models/user.js";
 import submission from "../models/submission.js";
 import { decryptToken } from "../utils/encryption.js";
+import { RETRY_DELAYS_MS, WORK_QUEUES, assertQueueTopology, getRetryQueueName } from "../utils/rabbitmq.js";
 
 const REPO_NAME = "leetcode-sync";
+const MAX_RETRY_ATTEMPTS = RETRY_DELAYS_MS.length;
 
 const EXTENSION_MAP = {
     "cpp": "cpp",
@@ -116,11 +118,11 @@ ${problemDetails?.content || "Description not available."}
 
         await submission.findByIdAndUpdate(submissionId, {status: "COMPLETED"});
 
-        return true;
+        return { success: true, retryable: false };
     } catch (error) {
         console.error(`❌ Error processing job for ${problemTitle}:`, error.message);
-        await submission.findByIdAndUpdate(submissionId, {status: "FAILED"});
-        return false;
+        const isPermanentError = /User not found or missing access token/i.test(error.message);
+        return { success: false, retryable: !isPermanentError };
     }
 }
 
@@ -131,16 +133,8 @@ const startWorker = async () => {
         const connection = await amqp.connect(process.env.RABBITMQ_URI);
         const channel = await connection.createChannel();
         
-        const queue = "github_sync_queue";
-
-        const dlx = "dlx_exchange";
-        const queueOptions = {
-            durable: true,
-            deadLetterExchange: dlx,
-            deadLetterRoutingKey: "failed_jobs"
-        };
-
-        await channel.assertQueue(queue, queueOptions);
+        const queue = WORK_QUEUES.GITHUB_SYNC;
+        await assertQueueTopology(channel);
         
         channel.prefetch(1);
         
@@ -149,12 +143,27 @@ const startWorker = async () => {
         channel.consume(queue, async (msg) => {
             if(msg !== null){
                 const jobData = JSON.parse(msg.content.toString());
-                const success = await processJob(jobData);
+                const { success, retryable } = await processJob(jobData);
+                const currentRetryCount = Number(msg.properties?.headers?.["x-retry-count"] || 0);
+                const nextRetryCount = currentRetryCount + 1;
                 
                 if(success){
                     channel.ack(msg);
                 } else {
-                    channel.nack(msg, false, false); 
+                    if (retryable && nextRetryCount <= MAX_RETRY_ATTEMPTS) {
+                        channel.sendToQueue(getRetryQueueName(queue, nextRetryCount), Buffer.from(JSON.stringify(jobData)), {
+                            persistent: true,
+                            headers: {
+                                ...(msg.properties?.headers || {}),
+                                "x-retry-count": nextRetryCount
+                            }
+                        });
+                        console.warn(`Retrying GitHub job ${jobData.submissionId}. Attempt ${nextRetryCount}/${MAX_RETRY_ATTEMPTS}`);
+                        channel.ack(msg);
+                    } else {
+                        await submission.findByIdAndUpdate(jobData.submissionId, {status: "FAILED"});
+                        channel.nack(msg, false, false);
+                    }
                 }
             }
         });

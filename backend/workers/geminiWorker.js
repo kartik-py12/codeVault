@@ -3,8 +3,10 @@ import amqp from "amqplib";
 import connectDB from "../db/connect.js";
 import { GoogleGenAI } from "@google/genai";
 import submission from "../models/submission.js";
+import { RETRY_DELAYS_MS, WORK_QUEUES, assertQueueTopology, getRetryQueueName } from "../utils/rabbitmq.js";
 
 const ai  = new GoogleGenAI({});
+const MAX_RETRY_ATTEMPTS = RETRY_DELAYS_MS.length;
 
 const generateNotes = async (problemTitle, problemDescription, code, language) => {
     
@@ -56,11 +58,11 @@ const processJob = async (jobData) => {
 
         console.log(`AI notes generated and saved for submission ${submissionId}`);
         console.log(`AI Notes for ${problemTitle}:`, aiNotes);
-        return true;
+        return { success: true, retryable: false };
 
     } catch (error) {
         console.error(`AI Generation Failed for ${submissionId}:`, error.message);
-        return false;
+        return { success: false, retryable: true };
     }
 }
 
@@ -71,15 +73,8 @@ const startWorker = async () => {
         const connection = await amqp.connect(process.env.RABBITMQ_URI);
         const channel =  await connection.createChannel();
 
-        const queue = "gemini_notes_queue";
-        const dlx = "dlx_exchange";
-        const queueOptions = {
-            durable: true,
-            deadLetterExchange: dlx,
-            deadLetterRoutingKey: "failed_jobs"
-        };
-
-        await channel.assertQueue(queue, queueOptions);
+        const queue = WORK_QUEUES.GEMINI_NOTES;
+        await assertQueueTopology(channel);
 
         channel.prefetch(1);
         console.log("Gemini Worker is waiting for messages in queue:", queue);
@@ -87,12 +82,27 @@ const startWorker = async () => {
         channel.consume(queue, async (msg) => {
             if(msg !== null){
                 const jobData = JSON.parse(msg.content.toString());
-                const success = await processJob(jobData);
+                const { success, retryable } = await processJob(jobData);
+                const currentRetryCount = Number(msg.properties?.headers?.["x-retry-count"] || 0);
+                const nextRetryCount = currentRetryCount + 1;
                 
                 if(success){
                     channel.ack(msg);
                 } else {
-                    channel.nack(msg, false, false); 
+                    if (retryable && nextRetryCount <= MAX_RETRY_ATTEMPTS) {
+                        channel.sendToQueue(getRetryQueueName(queue, nextRetryCount), Buffer.from(JSON.stringify(jobData)), {
+                            persistent: true,
+                            headers: {
+                                ...(msg.properties?.headers || {}),
+                                "x-retry-count": nextRetryCount
+                            }
+                        });
+                        console.warn(`Retrying Gemini job ${jobData.submissionId}. Attempt ${nextRetryCount}/${MAX_RETRY_ATTEMPTS}`);
+                        channel.ack(msg);
+                    } else {
+                        await submission.findByIdAndUpdate(jobData.submissionId, {status: "FAILED"});
+                        channel.nack(msg, false, false);
+                    }
                 }
             }
         });
